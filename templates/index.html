@@ -1,0 +1,46 @@
+{% include 'header.html' %}
+<body>
+    <div class="container">
+        <h1 class="mt-4">Movies</h1>
+        
+        <!-- Search Bar -->
+        <div class="d-flex justify-content-end">
+            <form method="POST" action="/" class="row g-3">
+                <div class="col-auto">
+                    <input type="text" class="form-control" name="search" placeholder="Search for a movie..." value="{{ search_query }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary mb-3">Search</button>
+                </div>
+            </form>
+        </div>
+
+
+
+        <!-- Display the list of movies -->
+        <div class="row mt-4">
+            {% if movies %}
+                {% for movie in movies %}
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card h-100">
+                            <img src="{{ url_for('thumbnail',filename = movie) }}" class="card-img-top" alt="{{movie}}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ movie.replace("_"," ") }}</h5>
+                                <form method="GET" action="{{ url_for('watch',filename = movie) }}">
+                                    <button type="submit" class="btn btn-link">Watch {{ movie.replace("_"," ") }}</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <p>No movies found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+<!-- Include Footer -->
+{% include 'footer.html' %}

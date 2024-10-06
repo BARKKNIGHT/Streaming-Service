@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+{% include 'header.html' %} <!-- Include the header -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player with Subtitles</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .video-container {
+            max-width: 100%;
+            margin: 0 auto; /* Center the container */
+            text-align: center; /* Center text inside the container */
+        }
+        video {
+            width: 100%; /* Make video responsive */
+        }
+        #thumbnailPreview {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            width: 120px;
+            display: none; /* Hide thumbnail by default */
+        }
+        .theater-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000; /* Ensure it is above other content */
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <!-- Video player -->
+        <div class="text-center"> <!-- Center the video -->
+            <video id="videoPlayer" data-video-id="{{ video_filename }}" controls poster="{{ url_for('thumbnail', filename=video_filename) }}" autoplay>
+                <!-- Main video source -->
+                <source src="{{ url_for('video', filename=video_filename) }}" type="video/mp4">
+                <track id="subtitles" src="{{ url_for('sub', filename=video_filename) }}" kind="subtitles" srclang="en" label="English" default>
+                <!-- Fallback message -->
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        
+        <!-- Thumbnail Preview -->
+        <img id="thumbnailPreview" src="{{ url_for('thumbnail', filename=video_filename) }}" alt="Movie thumbnail">
+    </div>
+
+    {% include 'footer.html' %} <!-- Include the footer -->
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const thumbnailPreview = document.getElementById('thumbnailPreview');
+        const subtitlesTrack = document.getElementById('subtitles');
+
+        // Event listener for mouse movement over video
+        video.addEventListener('mousemove', function(event) {
+            const rect = video.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const videoDuration = video.duration;
+            const hoverTime = (mouseX / rect.width) * videoDuration;
+
+            // Calculate the thumbnail index based on hover time
+            const index = Math.floor(hoverTime / 10); // 10 seconds intervals
+            const thumbnailName = `${video.getAttribute('data-video-id')}${index}`; // Construct the filename
+
+            // Set the thumbnail image source directly
+            thumbnailPreview.src = `/preview/${thumbnailName}`; // Update with the correct path
+            thumbnailPreview.style.display = 'block'; // Show thumbnail
+
+            // Position the thumbnail preview
+            thumbnailPreview.style.left = `${mouseX - 60}px`; // Center the thumbnail over the mouse
+        });
+
+        // Hide thumbnail when the mouse leaves the video
+        video.addEventListener('mouseleave', function() {
+            thumbnailPreview.style.display = 'none';
+        });
+
+        // Key bindings for player controls (like YouTube)
+        let theaterMode = false; // Track theater mode state
+        document.addEventListener('keydown', function(event) {
+            switch (event.key) {
+                case ' ':
+                    // Toggle play/pause
+                    if (video.paused) {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                    break;
+                case 'ArrowRight':
+                    video.currentTime += 10; // Skip forward
+                    break;
+                case 'ArrowLeft':
+                    video.currentTime -= 10; // Skip backward
+                    break;
+                case 'f':
+                    // Toggle fullscreen
+                    if (!document.fullscreenElement) {
+                        video.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                    break;
+                case 'c':
+                    // Toggle captions
+                    if (subtitlesTrack.mode === 'showing') {
+                        subtitlesTrack.mode = 'hidden'; // Hide captions
+                    } else {
+                        subtitlesTrack.mode = 'showing'; // Show captions
+                    }
+                    break;
+                case 't':
+                    // Toggle theater mode
+                    theaterMode = !theaterMode;
+                    if (theaterMode) {
+                        document.body.classList.add('theater-mode');
+                        video.style.width = '80%'; // Adjust width for theater mode
+                    } else {
+                        document.body.classList.remove('theater-mode');
+                        video.style.width = '100%'; // Reset width
+                    }
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
